@@ -13,8 +13,11 @@ print(file_path)
 
 raw_df = (spark.read
          .option("multiline", "true")
+          .option("inferSchema", "true")
          .format("json")
          .load(file_path)).select(explode("movie").alias("movies"))
+raw_df = (raw_df.select("movies.*"))
+display(raw_df)
 
 # COMMAND ----------
 

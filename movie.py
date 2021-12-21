@@ -11,14 +11,20 @@ print(file_path)
 
 # COMMAND ----------
 
-raw_df = (spark.read
+raw_df1 = (spark.read
          .option("multiline", "true")
           .option("inferSchema", "true")
          .format("json")
          .load(file_path)).select(explode("movie").alias("movies"))
-raw_df = (raw_df.select("movies.*"))
-display(raw_df)
+raw_df1 = (raw_df1.select("movies.*"))
+raw_df1.count()
+
 
 # COMMAND ----------
 
-display(raw_df)
+raw_df.drop(*)
+raw_df.count()
+
+# COMMAND ----------
+
+display(raw_df1)

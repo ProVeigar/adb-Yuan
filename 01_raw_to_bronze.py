@@ -70,6 +70,11 @@ raw_movies_df = (
 
 # COMMAND ----------
 
+raw_movies_df.count()
+#raw_movies_df.na.drop().count()
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ## Display the Raw Data
 # MAGIC 
@@ -173,6 +178,12 @@ LOCATION "{bronzePath}"
 # MAGIC ## Display Classic Bronze Table
 # MAGIC 
 # MAGIC Run this query to display the contents of the Classic Bronze Table
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC 
+# MAGIC SELECT COUNT(value) FROM movies_bronze
 
 # COMMAND ----------
 

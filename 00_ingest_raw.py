@@ -55,7 +55,7 @@
 
 # COMMAND ----------
 
-# MAGIC %run ./includes/user
+# %run ./includes/user
 
 # COMMAND ----------
 
@@ -76,6 +76,7 @@ dbutils.fs.rm(classicPipelinePath, recurse=True)
 # COMMAND ----------
 
 prepare_activity_data(landingPath)
+
 
 # COMMAND ----------
 

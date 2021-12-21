@@ -107,6 +107,11 @@ rawDF = read_batch_raw(rawPath)
 
 # COMMAND ----------
 
+rawDF.count()
+rawDF.na.drop().count()
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ### Step 2: Transform the Raw Data
 # MAGIC 
@@ -117,6 +122,11 @@ rawDF = read_batch_raw(rawPath)
 
 # TODO
 transformedRawDF = transform_raw(rawDF)
+
+# COMMAND ----------
+
+transformedRawDF.count()
+transformedRawDF.na.drop().count()
 
 # COMMAND ----------
 
@@ -194,6 +204,11 @@ dbutils.fs.rm(rawPath, recurse=True)
 
 # COMMAND ----------
 
+# MAGIC %sql
+# MAGIC SELECT count(value) FROM movies_bronze
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ## Bronze to Silver Step
 # MAGIC 
@@ -221,6 +236,11 @@ dbutils.fs.rm(silverPath, recurse=True)
 
 # TODO
 bronzeDF = spark.read.table ("movies_bronze").filter("status = 'new' ")
+
+# COMMAND ----------
+
+bronzeDF.count()
+bronzeDF.na.drop().count()
 
 # COMMAND ----------
 
@@ -267,6 +287,11 @@ bronzeMovieDF = bronzeDF.withColumn("nested_json", from_json(col("value"), json_
 
 # COMMAND ----------
 
+bronzeMovieDF.count()
+bronzeMovieDF.na.drop().count()
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ### Step 2: Create the Silver DataFrame by Unpacking the `nested_json` Column
 # MAGIC 
@@ -281,6 +306,15 @@ bronzeMovieDF = bronzeDF.withColumn("nested_json", from_json(col("value"), json_
 
 # TODO
 silver_movies= bronzeMovieDF.select("value", "nested_json.*")
+
+# COMMAND ----------
+
+silver_movies.count()
+
+
+# COMMAND ----------
+
+silver_movies.na.drop().count()
 
 # COMMAND ----------
 

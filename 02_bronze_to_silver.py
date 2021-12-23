@@ -57,142 +57,6 @@ display(dbutils.fs.ls(bronzePath))
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Land More Raw Data
-# MAGIC 
-# MAGIC Before we get started with this lab, let's land some more raw data.
-# MAGIC 
-# MAGIC In a production setting, we might have data coming in every
-# MAGIC hour. Here we are simulating this with the function
-# MAGIC `ingest_classic_data`.
-# MAGIC 
-# MAGIC 😎 Recall that we did this in the notebook `00_ingest_raw`.
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC 
-# MAGIC **EXERCISE:** Land ten hours using the utility function, `ingest_classic_data`.
-
-# COMMAND ----------
-
-# TODO
-ingest_classic_data()
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Current Delta Architecture
-# MAGIC Next, we demonstrate everything we have built up to this point in our
-# MAGIC Delta Architecture.
-# MAGIC 
-# MAGIC We do so not with the ad hoc queries as written before, but now with
-# MAGIC composable functions included in the file `classic/includes/main/python/operations`.
-# MAGIC You should check this file for the correct arguments to use in the next
-# MAGIC three steps.
-# MAGIC 
-# MAGIC 🤔 You can refer to `plus/02_bronze_to_silver` if you are stuck.
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ### Step 1: Create the `rawDF` DataFrame
-# MAGIC 
-# MAGIC **Exercise:** Use the function `read_batch_raw` to ingest the newly arrived
-# MAGIC data.
-
-# COMMAND ----------
-
-# TODO
-rawDF = read_batch_raw(rawPath)
-
-# COMMAND ----------
-
-rawDF.count()
-rawDF.na.drop().count()
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ### Step 2: Transform the Raw Data
-# MAGIC 
-# MAGIC **Exercise:** Use the function `transform_raw` to ingest the newly arrived
-# MAGIC data.
-
-# COMMAND ----------
-
-# TODO
-transformedRawDF = transform_raw(rawDF)
-
-# COMMAND ----------
-
-transformedRawDF.count()
-transformedRawDF.na.drop().count()
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Verify the Schema with an Assertion
-# MAGIC 
-# MAGIC The DataFrame `transformedRawDF` should now have the following schema:
-# MAGIC 
-# MAGIC ```
-# MAGIC datasource: string
-# MAGIC ingesttime: timestamp
-# MAGIC status: string
-# MAGIC value: string
-# MAGIC p_ingestdate: date
-# MAGIC ```
-
-# COMMAND ----------
-
-from pyspark.sql.types import *
-
-assert transformedRawDF.schema == StructType(
-    [
-        #StructField("datasource", StringType(), False),
-        StructField("ingesttime", TimestampType(), False),
-        StructField("status", StringType(), False),
-        StructField("value", StringType(), True),
-        StructField("p_ingestdate", DateType(), False),
-    ]
-)
-print("Assertion passed.")
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ### Step 3: Write Batch to a Bronze Table
-# MAGIC 
-# MAGIC **Exercise:** Use the function `batch_writer` to ingest the newly arrived
-# MAGIC data.
-# MAGIC 
-# MAGIC **Note**: you will need to begin the write with the `.save()` method on
-# MAGIC your writer.
-# MAGIC 
-# MAGIC 🤖 **Be sure to partition on `p_ingestdate`**.
-
-# COMMAND ----------
-
-# TODO
-rawToBronzeWriter = batch_writer(
-    dataframe=transformedRawDF, partition_column="p_ingestdate")
-
-rawToBronzeWriter.save(bronzePath)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Purge Raw File Path
-# MAGIC 
-# MAGIC Manually purge the raw files that have already been loaded.
-
-# COMMAND ----------
-
-dbutils.fs.rm(rawPath, recurse=True)
-
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC ## Display the Bronze Table
 # MAGIC 
 # MAGIC If you have ingested 16 hours you should see 160 records.
@@ -240,7 +104,7 @@ bronzeDF = spark.read.table ("movies_bronze").filter("status = 'new' ")
 # COMMAND ----------
 
 bronzeDF.count()
-bronzeDF.na.drop().count()
+#bronzeDF.na.drop().count()
 
 # COMMAND ----------
 
@@ -288,7 +152,7 @@ bronzeMovieDF = bronzeDF.withColumn("nested_json", from_json(col("value"), json_
 # COMMAND ----------
 
 bronzeMovieDF.count()
-bronzeMovieDF.na.drop().count()
+#bronzeMovieDF.na.drop().count()
 
 # COMMAND ----------
 
@@ -306,15 +170,6 @@ bronzeMovieDF.na.drop().count()
 
 # TODO
 silver_movies= bronzeMovieDF.select("value", "nested_json.*")
-
-# COMMAND ----------
-
-silver_movies.count()
-
-
-# COMMAND ----------
-
-silver_movies.na.drop().count()
 
 # COMMAND ----------
 
@@ -503,14 +358,14 @@ silver_movies_quarantine = silver_movies.filter("movie_id IS NULL")
 
 # COMMAND ----------
 
-display(silver_movies_clean)
+display(silver_movies_clean.filter("movie_id=1"))
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ## WRITE Clean Batch to a Silver Table
 # MAGIC 
-# MAGIC **EXERCISE:** Batch write `silver_health_tracker_clean` to the Silver table path, `silverPath`.
+# MAGIC **EXERCISE:** Batch write `silver_movies_clean` to the Silver table path, `silverPath`.
 # MAGIC 
 # MAGIC 1. Use format, `"delta"`
 # MAGIC 1. Use mode `"append"`.
@@ -522,7 +377,7 @@ display(silver_movies_clean)
 # TODO
 (
   silver_movies_clean.select(
-        "BackdropUrl",
+    "BackdropUrl",
     "Budget",
     "CreatedBy",
     "CreatedDate",
@@ -539,8 +394,7 @@ display(silver_movies_clean)
     "Title",
     "TmdbUrl",
     "UpdatedBy",
-    "UpdatedDate",
-    "genres"
+    "UpdatedDate"
     )
   .write.format("delta")
   .mode("append")
@@ -550,9 +404,22 @@ display(silver_movies_clean)
 
 # COMMAND ----------
 
+schema = """
+    id INTEGER,
+    name STRING
+"""
+#reand gener into df
+#silver_genres = silver_genres.select(explode("Movies.genres").alias("genres"),"Movies")
+#display(silver_genres)
+
+
+# COMMAND ----------
+
 spark.sql(
     """
 DROP TABLE IF EXISTS movies_silver
+DROP TABLE IF EXISTS movies_genres
+DROP TABLE IF EXISTS movies_olg
 """
 )
 
@@ -571,25 +438,40 @@ LOCATION "{silverPath}"
 
 # COMMAND ----------
 
-'''silverTable = spark.read.table("health_tracker_classic_silver")
+silverTable = spark.read.table("movies_silver")
 expected_schema = """
-  device_id INTEGER,
-  steps INTEGER,
-  eventtime TIMESTAMP,
-  name STRING,
-  p_eventdate DATE
+BackdropUrl STRING,
+Budget STRING,
+CreatedBy STRING,
+CreatedDate DATE,
+movie_id INTEGER,
+ImdbUrl string,
+OriginalLanguage string,
+Overview string,
+PosterUrl string,
+Price string,
+ReleaseDate date,
+Revenue string,
+RunTime string,
+Tagline string,
+Title string,
+TmdbUrl string,
+UpdatedBy string,
+UpdatedDate string,
+genres string
 """
 
 assert silverTable.schema == _parse_datatype_string(
     expected_schema
 ), "Schemas do not match"
-print("Assertion passed.")'''
+print("Assertion passed.")
 
 # COMMAND ----------
 
 # MAGIC %sql
 # MAGIC 
 # MAGIC SELECT * FROM movies_silver
+# MAGIC where movie_id = 2
 
 # COMMAND ----------
 
@@ -607,16 +489,20 @@ print("Assertion passed.")'''
 
 # COMMAND ----------
 
+silver_movies_clean.dropDuplicates()
+
+# COMMAND ----------
+
 # TODO
 from delta.tables import DeltaTable
 
 bronzeTable = DeltaTable.forPath(spark, bronzePath)
 silverAugmented = (
     silver_movies_clean
-    .withColumn("status", lit("loaded"))
+    .withColumn("status", lit("loaded")).dropDuplicates()
 )
 
-update_match = "bronze.value = clean.value"
+update_match = "bronze.value= clean.value"
 update = {"status": "clean.status"}
 
 (

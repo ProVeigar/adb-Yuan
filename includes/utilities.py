@@ -8,6 +8,7 @@ from delta import DeltaTable
 from datetime import datetime
 import time
 MOVIE_DELTA = "movies.delta"
+genres_data ="genres.delta"
 
 
 # COMMAND ----------
@@ -28,7 +29,7 @@ def prepare_activity_data(landingPath) -> bool:
 
 def ingest_classic_data(hours: int = 1) -> bool:
   MOVIE_DELTA = "movies.delta"
-  next_batch = spark.read.format("delta").load(landingPath + MOVIE_DELTA)
+  next_batch = spark.read.format("delta").load(glandingPath + MOVIE_DELTA)
   next_batch = (next_batch.select("movies.*"))
   file_name = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
   (next_batch.write.format("json").save(rawPath + file_name))

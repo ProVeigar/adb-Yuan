@@ -427,7 +427,14 @@ display(silver_genres)
 
 # COMMAND ----------
 
+movies_df = silver_movies.select("movie_id", "value")
+silver_movies_genres = movies_df.join(silver_genres, silver_genres.movie_id == movies_df.movie_id).select(movies_df.movie_id, silver_genres.genres_id)
+silver_movies_genres.count()
 
+# COMMAND ----------
+
+silver_originallanguages = silver_movies.select("movie_id","Title", "OriginalLanguage","value")
+silver_originallanguages = silver_originallanguages.dropDuplicates()
 
 # COMMAND ----------
 

@@ -231,6 +231,7 @@ assert silver_movies.schema == _parse_datatype_string(
   genres STRING
 """
 )
+#
 print("Assertion passed.")
 
 # COMMAND ----------
@@ -404,13 +405,28 @@ display(silver_movies_clean.filter("movie_id=1"))
 
 # COMMAND ----------
 
-schema = """
-    id INTEGER,
-    name STRING
-"""
-#reand gener into df
-#silver_genres = silver_genres.select(explode("Movies.genres").alias("genres"),"Movies")
-#display(silver_genres)
+# MAGIC %md Generate silver_genres
+
+# COMMAND ----------
+
+from pyspark.sql.functions import *
+file_path = [file.path for file in dbutils.fs.ls("/FileStore/movies/") if "movie_" in file.path]
+raw_df1 = (spark.read
+         .option("multiline", "true")
+          .option("inferSchema", "true")
+         .format("json")
+         .load(file_path)).select(explode("movie").alias("movies"))
+silver_genres = raw_df1.select("movies.genres","movies.id","movies")
+silver_genres = silver_genres.select("movies","id",explode("genres").alias("myGenres"))
+#silver_genres = silver_genres.select("movie",explode("myGenres"))
+silver_genres = silver_genres.select("movies",col("id").alias("movie_id"),col("myGenres.id").alias("genres_id"),"myGenres.name")
+#silver_genres = silver_genres.select(col("genres.id").cast("integer").alias("genre_id"),col("genres.name").alias("genre_name"),"Movies") 
+silver_genres = silver_genres.dropDuplicates().na.drop()
+display(silver_genres)
+
+
+# COMMAND ----------
+
 
 
 # COMMAND ----------
@@ -418,8 +434,8 @@ schema = """
 spark.sql(
     """
 DROP TABLE IF EXISTS movies_silver
-DROP TABLE IF EXISTS movies_genres
-DROP TABLE IF EXISTS movies_olg
+#DROP TABLE IF EXISTS movies_genres
+#DROP TABLE IF EXISTS movies_olg
 """
 )
 

@@ -62,7 +62,7 @@ dbutils.fs.rm(bronzePath, recurse=True)
 # COMMAND ----------
 
 # TODO
-kafka_schema = "value STRING"
+kafka_schema = "value string"
 
 raw_movies_df = (
   spark.read.format("text").schema(kafka_schema).load(rawPath)
